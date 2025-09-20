@@ -1,0 +1,202 @@
+/* Estilos personalizados para la aplicación */
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Clases de utilidad */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Mejoras para la zona de arrastre */
+#dropZone {
+    position: relative;
+    background: linear-gradient(to bottom, #f9fafb, #ffffff);
+}
+
+#dropZone:hover {
+    background: linear-gradient(to bottom, #eff6ff, #ffffff);
+}
+
+#dropZone.drag-over {
+    background: linear-gradient(to bottom, #dbeafe, #eff6ff);
+    border-color: #3b82f6 !important;
+}
+
+/* Estilos para las tablas */
+table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* Inputs mejorados */
+input[type="text"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Botones con efectos */
+button {
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Vista previa de imagen */
+#previewImg {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e5e7eb;
+}
+
+/* Loading spinner */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Tooltips */
+.tooltip {
+    position: relative;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1f2937;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    margin-bottom: 0.25rem;
+}
+
+.tooltip:hover::before {
+    opacity: 1;
+}
+
+/* Responsive tables */
+@media (max-width: 768px) {
+    .overflow-x-auto {
+        margin: -1rem;
+        padding: 1rem;
+    }
+    
+    table {
+        font-size: 0.875rem;
+    }
+    
+    table td, table th {
+        padding: 0.5rem 0.25rem;
+    }
+}
+
+/* Estados de validación */
+input.valid {
+    border-color: #10b981;
+}
+
+input.invalid {
+    border-color: #ef4444;
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+}
+
+.badge-success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* Mejoras para móviles */
+@media (max-width: 640px) {
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .bg-white {
+        border-radius: 0.5rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+    
+    h2 {
+        font-size: 1.25rem;
+    }
+}
