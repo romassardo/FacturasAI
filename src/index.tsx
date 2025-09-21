@@ -46,6 +46,36 @@ app.get('/v2', (c) => {
         <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
         
+        <!-- PDF.js para procesar PDFs - Versión estable -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+        <script>
+            // Configurar PDF.js worker
+            window.addEventListener('load', function() {
+                if (typeof pdfjsLib !== 'undefined') {
+                    // Usar versión compatible del worker
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+                    console.log('PDF.js cargado correctamente, versión:', pdfjsLib.version);
+                    
+                    // Configuraciones adicionales para mejor compatibilidad
+                    pdfjsLib.disableRange = true;
+                    pdfjsLib.disableStream = true;
+                    pdfjsLib.disableAutoFetch = true;
+                } else {
+                    console.error('Error: PDF.js no se pudo cargar');
+                    // Intentar cargar de respaldo
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js';
+                    script.onload = function() {
+                        if (typeof pdfjsLib !== 'undefined') {
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+                            console.log('PDF.js cargado desde respaldo');
+                        }
+                    };
+                    document.head.appendChild(script);
+                }
+            });
+        </script>
+        
         <!-- App Script -->
         <script src="/static/app-v2.js"></script>
     </body>
@@ -214,8 +244,17 @@ app.post('/api/process-document', async (c) => {
 
     const openaiKey = apiKey || env.OPENAI_API_KEY;
     
-    if (!openaiKey || !imageBase64) {
-      return c.json({ error: 'Datos requeridos faltantes' }, 400);
+    if (!openaiKey) {
+      return c.json({ error: 'API Key requerida' }, 400);
+    }
+    
+    if (!imageBase64) {
+      return c.json({ error: 'Imagen requerida' }, 400);
+    }
+    
+    // Validar que la imagen base64 es válida
+    if (imageBase64.length < 100) {
+      return c.json({ error: 'Imagen base64 inválida o muy pequeña' }, 400);
     }
 
     const fieldDescriptions = fields.map((f: any) => 
@@ -255,8 +294,10 @@ app.post('/api/process-document', async (c) => {
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:image/jpeg;base64,${imageBase64}`,
-                  detail: model.includes('mini') ? 'low' : 'high'
+                  // Detectar el tipo MIME correcto de la imagen
+                  url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`,
+                  // Usar 'low' detail para modelos mini/nano para reducir costos
+                  detail: (model.includes('mini') || model.includes('nano')) ? 'low' : 'high'
                 }
               }
             ]
@@ -268,8 +309,19 @@ app.post('/api/process-document', async (c) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      return c.json({ error: `Error de OpenAI: ${error}` }, 500);
+      const errorText = await response.text();
+      console.error('OpenAI API Error:', errorText);
+      
+      // Intentar parsear el error como JSON
+      try {
+        const errorJson = JSON.parse(errorText);
+        return c.json({ 
+          error: `Error de OpenAI: ${errorJson.error?.message || errorText}`,
+          details: errorJson.error
+        }, 500);
+      } catch (e) {
+        return c.json({ error: `Error de OpenAI: ${errorText}` }, 500);
+      }
     }
 
     const data = await response.json();
@@ -283,7 +335,17 @@ app.post('/api/process-document', async (c) => {
       extractedData = { raw: content };
     }
 
-    const cost = model.includes('mini') ? 0.002 : 0.01;
+    // Calcular costo estimado basado en el modelo actual (Sept 2025)
+    // Estimación para ~1000 tokens promedio por documento
+    const costMap: { [key: string]: number } = {
+      'gpt-4o-mini': 0.001,           // $0.15 + $0.60 por 1M tokens
+      'gpt-4o': 0.012,                 // $2.50 + $10.00 por 1M tokens
+      'gpt-4o-2024-08-06': 0.012,      // $2.50 + $10.00 por 1M tokens
+      'o3-mini': 0.005,                // $1.10 + $4.40 por 1M tokens
+      'o1-mini': 0.005,                // $1.10 + $4.40 por 1M tokens
+      'gpt-4-turbo': 0.04              // $10.00 + $30.00 por 1M tokens (legacy)
+    };
+    const cost = costMap[model] || 0.01;
 
     return c.json({
       success: true,
@@ -361,8 +423,19 @@ app.post('/api/process-invoice', async (c) => {
     });
 
     if (!response.ok) {
-      const error = await response.text();
-      return c.json({ error: `Error de OpenAI: ${error}` }, 500);
+      const errorText = await response.text();
+      console.error('OpenAI API Error:', errorText);
+      
+      // Intentar parsear el error como JSON
+      try {
+        const errorJson = JSON.parse(errorText);
+        return c.json({ 
+          error: `Error de OpenAI: ${errorJson.error?.message || errorText}`,
+          details: errorJson.error
+        }, 500);
+      } catch (e) {
+        return c.json({ error: `Error de OpenAI: ${errorText}` }, 500);
+      }
     }
 
     const data = await response.json();

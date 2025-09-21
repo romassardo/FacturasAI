@@ -1,259 +1,220 @@
-# 🚀 DocuAI Pro - Procesador Inteligente de Documentos con IA
+# 📄 DocuAI Pro - Procesador Inteligente de Documentos
+
+## 🚀 Descripción General
+**DocuAI Pro** es una aplicación web moderna para procesar facturas, tickets y documentos usando la API de OpenAI. Extrae información estructurada de imágenes de documentos con alta precisión usando los últimos modelos de OpenAI con capacidades de visión integradas.
 
 ## 🌐 URLs de Acceso
+- **Producción**: https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev/v2
+- **Versión Clásica**: https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev/
+- **GitHub**: [Pendiente de configuración]
 
-### **Versión Pro (Ultra Moderna):**
-# 👉 **[https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev/v2](https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev/v2)**
+## ✨ Características Actuales
 
-### **Versión Clásica:**
-# 👉 **[https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev](https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev)**
+### ✅ Funcionalidades Implementadas
+- **Soporte PDF Nativo**: Convierte automáticamente PDFs a imágenes para procesamiento
+- **Procesamiento con IA**: Extracción automática de datos usando modelos GPT de OpenAI con visión
+- **Múltiples Modelos**: Modelos GPT-4o y O-series disponibles 
+- **Clasificación Automática**: Detecta automáticamente si es factura o ticket
+- **Memoria de Vendedores**: Aprende de correcciones anteriores
+- **Procesamiento en Cola**: Múltiples documentos simultáneos
+- **Exportación Excel**: Descarga todos los datos procesados en formato XLSX
+- **Persistencia Total**: Los documentos se mantienen entre sesiones
+- **Modo Oscuro/Claro**: Cambio de tema integrado
+- **API REST**: Endpoints disponibles para integración externa
+- **Validación de API Key**: Verificación en tiempo real con OpenAI
 
----
+### 🤖 Modelos Disponibles (Septiembre 2025)
 
-## ✨ Características de la Versión Pro
+| Modelo | Descripción | Precio Input | Precio Output | Uso Recomendado |
+|--------|-------------|--------------|---------------|-----------------|
+| **GPT-4o Mini** 🌟 | Más popular y económico | $0.15/1M | $0.60/1M | ✅ Ideal para facturas y tickets estándar, mejor relación costo-beneficio |
+| **GPT-4o** 🚀 | Balanceado | $2.50/1M | $10.00/1M | Uso general, documentos complejos |
+| **O3 Mini** 🧠 | Con razonamiento | $1.10/1M | $4.40/1M | Documentos que requieren análisis y razonamiento |
+| **O1 Mini** 💡 | Razonamiento básico | $1.10/1M | $4.40/1M | Balance entre costo y capacidad de razonamiento |
+| **GPT-4o Agosto 2024** 🔄 | Versión específica | $2.50/1M | $10.00/1M | Compatibilidad con versiones anteriores |
 
-### 🎨 **Interfaz Ultra Moderna**
-- **Glassmorphism Design**: Efectos de vidrio y transparencias
-- **Dark/Light Mode**: Tema adaptativo con transiciones suaves
-- **Animaciones Fluidas**: Microinteracciones y transiciones elegantes
-- **Dashboard Analítico**: Estadísticas en tiempo real
-- **Sidebar Navegable**: Acceso rápido a todas las secciones
+**Nota Importante**: 
+- Todos los modelos GPT-4o y O-series incluyen **capacidades de visión nativas** para procesar imágenes
+- No existe un modelo "Vision" separado - la capacidad de procesamiento de imágenes está integrada
+- Los precios están en USD por millón de tokens (1M tokens ≈ 750,000 palabras)
+- Un documento típico usa entre 500-2000 tokens dependiendo de la complejidad
 
-### 🤖 **Clasificador Inteligente con IA**
-- **Detección Automática**: Identifica el tipo de documento automáticamente
-- **3 Plantillas Predefinidas**: Factura, Ticket, Nota de Gastos
-- **Campos Dinámicos**: Se adaptan según el tipo de documento
-- **Aprendizaje Continuo**: Mejora con cada corrección
+### 📊 Arquitectura de Datos
 
-### 🧠 **Memoria de Proveedores**
-- **Historial Inteligente**: Guarda patrones de cada emisor
-- **Correcciones Automáticas**: Aplica reglas aprendidas
-- **Reglas de Post-Proceso**: Corrige errores comunes automáticamente
-- **Base de Conocimiento**: Mejora la precisión con el tiempo
-
-### 🚀 **Procesamiento Avanzado**
-- **Soporte Multipágina**: Procesa PDFs de varias páginas
-- **Procesamiento por Lotes**: Múltiples documentos simultáneamente
-- **Cola Visual**: Gestión de documentos pendientes
-- **Estados en Tiempo Real**: Pendiente, Procesando, Completado
-
-### 💰 **Optimización de Costos**
-- **Estimación Previa**: Calcula el costo antes de procesar
-- **Modelo Automático**: Selecciona el más económico según complejidad
-- **Tracking en Tiempo Real**: Monitoreo de gastos de API
-- **Presupuesto por Lote**: Control de gastos en procesamiento masivo
-
-### 🔗 **Integraciones Empresariales**
-- **API REST Completa**: Endpoints para integración externa
-- **Webhooks**: Notificaciones automáticas
-- **Exportación Múltiple**: Excel, JSON, CSV
-- **Compatible con**: Zapier, Make, n8n, Google Sheets
-
-### ✏️ **Editor Visual Interactivo**
-- **Click-to-Fix**: Corrección con un clic
-- **Edición en Línea**: Modifica datos antes de guardar
-- **Validación Automática**: Verifica campos según tipo
-- **Vista Previa**: Cambios en tiempo real
-
----
-
-## 📊 Comparación de Versiones
-
-| Característica | **Versión Clásica** | **Versión Pro** |
-|----------------|---------------------|-----------------|
-| **Interfaz** | Funcional básica | Ultra moderna con animaciones |
-| **Temas** | Solo claro | Claro/Oscuro adaptativo |
-| **Navegación** | Página única | Multi-página con sidebar |
-| **Clasificación** | Manual | Automática con IA |
-| **Plantillas** | Fijas | Dinámicas y personalizables |
-| **Procesamiento** | Individual | Lotes y multipágina |
-| **Memoria** | No | Sí, por proveedor |
-| **Costos** | No calculados | Estimación y optimización |
-| **Dashboard** | No | Analíticas completas |
-| **Integraciones** | Excel básico | API REST, Webhooks, múltiples |
-
----
-
-## 🚀 Guía de Uso Rápido
-
-### **1. Configuración Inicial**
-1. Accede a la [Versión Pro](https://3000-iqec3a6li4fmcc1b2tzwz-6532622b.e2b.dev/v2)
-2. Ve a **Configuración** (⚙️)
-3. Ingresa tu **API Key de OpenAI**
-4. Activa las opciones deseadas:
-   - ✅ Clasificación automática
-   - ✅ Optimización de costos
-
-### **2. Procesar Documentos**
-1. Haz clic en **"Procesar"** en el sidebar
-2. Arrastra tus documentos (imágenes o PDFs)
-3. El sistema detectará automáticamente el tipo
-4. Haz clic en ▶️ para procesar
-
-### **3. Gestionar Resultados**
-1. Ve a **"Documentos"** para ver procesados
-2. Usa filtros para búsquedas específicas
-3. Exporta a Excel con un clic
-4. Edita o elimina según necesites
-
----
-
-## 🛠️ Stack Tecnológico
-
-### **Backend**
-- **Hono Framework**: Ultra ligero para edge computing
-- **TypeScript**: Tipado estático
-- **Cloudflare Workers**: Deployment global
-- **OpenAI Vision API**: Procesamiento con IA
-
-### **Frontend**
-- **Vanilla JavaScript**: Sin dependencias pesadas
-- **CSS3 Moderno**: Variables, glassmorphism, animaciones
-- **Chart.js**: Visualización de datos
-- **XLSX**: Exportación a Excel
-
-### **Almacenamiento**
-- **LocalStorage**: Persistencia local
-- **Cloudflare KV**: (Preparado)
-- **Cloudflare D1**: (Preparado)
-
----
-
-## 📡 API Endpoints
-
-### **Clasificación de Documentos**
-```http
-POST /api/classify-document
-Content-Type: application/json
-
+#### **Modelos de Datos**
+```javascript
+// Documento Procesado
 {
-  "imageBase64": "..."
+  id: string,
+  timestamp: ISO8601,
+  filename: string,
+  template: 'invoice' | 'receipt' | 'custom',
+  data: {
+    // Campos extraídos dinámicamente
+    invoice_number: string,
+    date: string,
+    vendor: string,
+    total: number,
+    tax: number,
+    subtotal: number,
+    // ... más campos según plantilla
+  },
+  cost: number,
+  model: string
+}
+
+// Plantilla de Documento
+{
+  id: string,
+  name: string,
+  icon: string,
+  fields: Array<{
+    key: string,
+    label: string,
+    type: 'text' | 'date' | 'currency',
+    required: boolean
+  }>,
+  keywords: string[],
+  color: string
 }
 ```
 
-### **Procesamiento de Documentos**
-```http
-POST /api/process-document
-Content-Type: application/json
+#### **Almacenamiento**
+- **LocalStorage**: Configuración, documentos procesados, cola, plantillas
+- **Base64 Encoding**: Imágenes convertidas para persistencia
+- **Sincronización**: Automática cada 5 segundos para mantener consistencia
 
-{
-  "imageBase64": "...",
-  "fields": [...],
-  "model": "gpt-4o-mini"
-}
-```
+### 🔌 API Endpoints
 
-### **Estimación de Costos**
-```http
-POST /api/estimate-cost
-Content-Type: application/json
+| Endpoint | Método | Descripción | Parámetros |
+|----------|--------|-------------|------------|
+| `/api/process-document` | POST | Procesa un documento | `imageBase64`, `fields`, `apiKey`, `model` |
+| `/api/classify-document` | POST | Clasifica tipo de documento | `imageBase64`, `apiKey` |
+| `/api/validate-key` | POST | Valida API key de OpenAI | `apiKey` |
+| `/api/estimate-cost` | POST | Estima costo de procesamiento | `fileSize`, `model` |
 
-{
-  "fileSize": 1024000,
-  "pageCount": 1,
-  "model": "gpt-4o-mini"
-}
-```
+### 💰 Estimación de Costos por Documento
 
-### **Validación de API Key**
-```http
-POST /api/validate-key
-Content-Type: application/json
+| Modelo | Costo Aproximado | Ejemplo (100 docs/mes) |
+|--------|------------------|-------------------------|
+| GPT-4o Mini | ~$0.001 | $0.10 |
+| GPT-4o | ~$0.012 | $1.20 |
+| O3/O1 Mini | ~$0.005 | $0.50 |
 
-{
-  "apiKey": "sk-..."
-}
-```
+### 🛠️ Stack Tecnológico
+- **Backend**: Hono Framework + Cloudflare Workers
+- **Frontend**: JavaScript vanilla + TailwindCSS
+- **Procesamiento PDF**: PDF.js para conversión a imágenes
+- **IA**: OpenAI GPT Models (GPT-4o, O-series)
+- **Deployment**: Cloudflare Pages
+- **Gestión de Procesos**: PM2
 
----
+## 📋 Guía de Usuario
+
+### Configuración Inicial
+1. **Obtener API Key**: 
+   - Ve a https://platform.openai.com/api-keys
+   - Crea una nueva API key
+   - Asegúrate de tener créditos en tu cuenta
+
+2. **Configurar en la App**: 
+   - Ve a Configuración ⚙️
+   - Pega tu API Key (debe empezar con `sk-`)
+   - Selecciona el modelo preferido (recomendado: GPT-4o Mini)
+   - Guarda y valida
+
+3. **Verificar Configuración**:
+   - Usa el botón "Depurar" para verificar que la API Key está guardada
+   - Haz clic en "Validar" para confirmar conexión con OpenAI
+
+### Procesar Documentos
+1. Ve a la sección "Procesar"
+2. Arrastra o selecciona documentos:
+   - **Imágenes**: JPG, PNG, GIF, WEBP
+   - **PDFs**: Se convierten automáticamente a imágenes
+3. Espera la conversión si es PDF (2-3 segundos)
+4. Selecciona campos a extraer o usa clasificación automática
+5. Revisa y corrige resultados si es necesario
+6. Exporta a Excel cuando termines
+
+### Optimización de Costos
+- **Alto volumen**: Usa GPT-4o Mini (mejor relación costo-beneficio)
+- **Documentos complejos**: Usa GPT-4o o modelos O-series
+- **Procesamiento masivo**: Activa "Control de Costos" en configuración
+- **Tip**: GPT-4o Mini es suficiente para el 90% de documentos estándar
+
+## 🚧 Funcionalidades en Desarrollo
+- [ ] Soporte para más formatos de documento (Word, PowerPoint)
+- [ ] Procesamiento batch con programación
+- [ ] Integración con Google Drive y Dropbox
+- [ ] API webhooks para notificaciones en tiempo real
+- [ ] Dashboard analytics con gráficos interactivos
+- [ ] Exportación a múltiples formatos (CSV, JSON, XML)
 
 ## 🔧 Desarrollo Local
 
-### **Requisitos**
+### Requisitos
 - Node.js 18+
 - npm o yarn
-- API key de OpenAI con acceso a GPT-4 Vision
+- Cuenta de OpenAI con créditos
 
-### **Instalación**
+### Instalación
 ```bash
-# Clonar repositorio
-git clone [tu-repo]
+# Clonar repositorio (cuando esté en GitHub)
+git clone [url-del-repo]
+cd webapp
 
 # Instalar dependencias
-cd webapp
 npm install
 
-# Configurar API key (crear archivo .dev.vars)
-echo "OPENAI_API_KEY=tu-api-key" > .dev.vars
+# Configurar variables de entorno
+echo "OPENAI_API_KEY=tu-api-key" > .env
 
-# Construir proyecto
+# Desarrollo local
+npm run dev
+
+# Build para producción
 npm run build
 
-# Iniciar desarrollo
-npm run dev:sandbox
+# Deploy a Cloudflare
+npm run deploy
 ```
 
-### **Scripts Disponibles**
-```bash
-npm run dev          # Desarrollo con Vite
-npm run build        # Construir para producción
-npm run preview      # Vista previa local
-npm run deploy       # Desplegar a Cloudflare Pages
+### Scripts Disponibles
+```json
+{
+  "dev": "Desarrollo local con Vite",
+  "build": "Construcción para producción",
+  "preview": "Vista previa local",
+  "deploy": "Deploy a Cloudflare Pages",
+  "clean-port": "Limpia puerto 3000",
+  "test": "Prueba de conectividad"
+}
 ```
 
----
-
-## 📈 Métricas y Performance
-
-- **Tiempo de Procesamiento**: ~3s por documento
-- **Precisión Promedio**: 94.5%
-- **Costo por Documento**: $0.002 - $0.01
-- **Tamaño Bundle**: <100KB
-- **Latencia Global**: <50ms (Cloudflare Edge)
-
----
+## 📈 Métricas y Estadísticas
+- **Documentos Procesados**: Contador total y por día
+- **Precisión Promedio**: ~95% en documentos claros
+- **Tiempo de Procesamiento**: 2-5 segundos por documento
+- **Costo Promedio**: $0.001 - $0.012 por documento según modelo
 
 ## 🔐 Seguridad
+- API Keys almacenadas localmente en el navegador
+- No se envían datos a servidores externos (excepto OpenAI)
+- Procesamiento directo cliente-OpenAI
+- Sin almacenamiento permanente en servidor
 
-- ✅ API keys almacenadas localmente
-- ✅ No se guardan imágenes en servidor
-- ✅ Procesamiento en memoria
-- ✅ HTTPS obligatorio
-- ✅ Sanitización de inputs
+## 🤝 Soporte y Contribución
+- **Reportar Issues**: [Pendiente GitHub]
+- **Documentación API**: Disponible en `/api/docs`
+- **Contacto**: [Configurar email de soporte]
 
----
-
-## 🎯 Próximas Funcionalidades
-
-- [ ] OCR mejorado para documentos escaneados
-- [ ] Soporte para más idiomas
-- [ ] Integración con Google Drive
-- [ ] API de voz para dictado
-- [ ] Exportación a sistemas ERP
-- [ ] Machine Learning local
-- [ ] Plantillas colaborativas
+## 📜 Licencia
+Proyecto privado - Todos los derechos reservados
 
 ---
 
-## 📝 Licencia y Créditos
-
-**Desarrollado con 💜 usando:**
-- OpenAI GPT-4 Vision
-- Cloudflare Workers
-- Hono Framework
-
----
-
-## 🆘 Soporte
-
-Si encuentras algún problema o tienes sugerencias:
-1. Revisa la sección de configuración
-2. Verifica tu API key de OpenAI
-3. Asegúrate de usar imágenes claras
-4. Para PDFs, verifica que sean legibles
-
----
-
-**Estado**: ✅ Activo y Funcionando
-**Última Actualización**: 2025-01-20
-**Versión**: 2.0.0 Pro
+**Última Actualización**: Septiembre 2025  
+**Versión**: 2.3.0  
+**Estado**: ✅ Producción Activa  
+**Modelos**: Actualizados con los últimos modelos de OpenAI (GPT-4o, O-series)

@@ -164,6 +164,7 @@ class ModernUI {
                         <div class="upload-zone" id="quickDropZone">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <p>Arrastra documentos aquí</p>
+                            <small class="text-gray-500">🖼️ Imágenes (JPG, PNG) o 📄 PDFs</small>
                             <input type="file" id="quickFileInput" multiple accept="image/*,.pdf" hidden>
                         </div>
                         <div id="uploadQueue" class="mt-4"></div>
@@ -256,6 +257,11 @@ class ModernUI {
     }
 
     static loadPage(page) {
+        // Sincronizar API key antes de cambiar de página
+        if (typeof AppState.syncApiKey === 'function') {
+            AppState.syncApiKey();
+        }
+        
         // Guardar página actual
         AppState.currentPage = page;
         localStorage.setItem('current_page', page);
@@ -554,25 +560,189 @@ class DocumentProcessor {
         }
     }
 
-    static handleFiles(files) {
+    // Nuevo método para convertir PDF a imagen
+    static async convertPDFToImage(file) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                console.log('Iniciando conversión de PDF:', file.name);
+                
+                // Verificar que pdfjsLib esté disponible
+                if (typeof pdfjsLib === 'undefined') {
+                    throw new Error('PDF.js no está cargado. Recarga la página.');
+                }
+                
+                // Leer el archivo PDF
+                const arrayBuffer = await file.arrayBuffer();
+                console.log('PDF leído, tamaño:', arrayBuffer.byteLength, 'bytes');
+                
+                // Configurar opciones para PDF.js
+                const loadingTask = pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                    cMapPacked: true,
+                    enableXfa: true
+                });
+                
+                // Manejar el progreso de carga
+                loadingTask.onProgress = function(progress) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    console.log(`Cargando PDF: ${percent}%`);
+                };
+                
+                const pdf = await loadingTask.promise;
+                console.log('PDF cargado, número de páginas:', pdf.numPages);
+                
+                // Obtener la primera página
+                const page = await pdf.getPage(1);
+                
+                // Configurar el canvas con escala para mejor calidad
+                const scale = 1.5; // Reducido para evitar problemas de memoria
+                const viewport = page.getViewport({ scale });
+                
+                // Crear canvas
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                console.log('Renderizando página, dimensiones:', viewport.width, 'x', viewport.height);
+                
+                // Renderizar la página del PDF
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport,
+                    background: 'white'
+                };
+                
+                await page.render(renderContext).promise;
+                console.log('Página renderizada exitosamente');
+                
+                // Convertir el canvas a data URL (PNG)
+                const dataUrl = canvas.toDataURL('image/png', 0.95);
+                console.log('Conversión completada, tamaño del data URL:', dataUrl.length);
+                
+                // Limpiar recursos
+                pdf.destroy();
+                
+                resolve(dataUrl);
+                
+            } catch (error) {
+                console.error('Error detallado al convertir PDF:', error);
+                console.error('Stack trace:', error.stack);
+                reject(error);
+            }
+        });
+    }
+    
+    static async handleFiles(files) {
         let filesAdded = 0;
         
-        Array.from(files).forEach(file => {
+        for (const file of Array.from(files)) {
             // Validar tipo de archivo
             if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
                 ModernUI.showToast(`${file.name} no es una imagen o PDF válido`, 'error');
-                return;
+                continue;
+            }
+            
+            // Si es PDF, convertirlo a imagen primero
+            if (file.type === 'application/pdf') {
+                try {
+                    ModernUI.showToast(`🔄 Convirtiendo PDF: ${file.name}...`, 'info');
+                    const imageDataUrl = await this.convertPDFToImage(file);
+                    
+                    const id = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    const base64Data = imageDataUrl.split(',')[1];
+                    
+                    const queueItem = {
+                        id,
+                        filename: file.name,
+                        fileType: 'image/png',
+                        fileSize: file.size,
+                        base64: base64Data,
+                        dataUrl: imageDataUrl,
+                        status: 'pending',
+                        timestamp: new Date().toISOString(),
+                        originalType: 'pdf'
+                    };
+                    
+                    AppState.processingQueue.push(queueItem);
+                    filesAdded++;
+                    
+                    localStorage.setItem('processing_queue', JSON.stringify(AppState.processingQueue));
+                    this.updateQueueDisplay();
+                    this.updateQueueDisplay('uploadQueue');
+                    
+                    ModernUI.showToast(`✅ PDF convertido: ${file.name}`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error procesando PDF:', error);
+                    
+                    // Mensaje de error más específico
+                    let errorMessage = 'Error al convertir PDF';
+                    
+                    if (error.message) {
+                        if (error.message.includes('PDF.js')) {
+                            errorMessage = 'PDF.js no está cargado. Recarga la página.';
+                        } else if (error.message.includes('Invalid PDF')) {
+                            errorMessage = 'El PDF parece estar dañado o no es válido.';
+                        } else if (error.message.includes('Password')) {
+                            errorMessage = 'El PDF está protegido con contraseña.';
+                        } else {
+                            errorMessage = `Error: ${error.message}`;
+                        }
+                    }
+                    
+                    ModernUI.showToast(`❌ ${errorMessage}: ${file.name}`, 'error');
+                    
+                    // Aún así, intentar agregar el PDF para procesamiento directo
+                    console.log('Intentando procesar PDF como archivo binario...');
+                    
+                    // Opción alternativa: agregar como está para que el usuario decida
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const id = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                        const base64Result = reader.result;
+                        const base64Data = base64Result.includes(',') ? base64Result.split(',')[1] : base64Result;
+                        
+                        const queueItem = {
+                            id,
+                            filename: file.name + ' (PDF no convertido)',
+                            fileType: 'application/pdf',
+                            fileSize: file.size,
+                            base64: base64Data,
+                            dataUrl: base64Result,
+                            status: 'error',
+                            error: errorMessage,
+                            timestamp: new Date().toISOString(),
+                            originalType: 'pdf'
+                        };
+                        
+                        AppState.processingQueue.push(queueItem);
+                        localStorage.setItem('processing_queue', JSON.stringify(AppState.processingQueue));
+                        this.updateQueueDisplay();
+                        this.updateQueueDisplay('uploadQueue');
+                        
+                        ModernUI.showToast(`⚠️ ${file.name} añadido pero requiere conversión manual`, 'warning');
+                    };
+                    reader.readAsDataURL(file);
+                }
+                continue;
             }
 
             const reader = new FileReader();
             reader.onload = () => {
                 const id = `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                // Mantener el data URL completo para preservar el tipo MIME
+                const base64Result = reader.result;
+                const base64Data = base64Result.includes(',') ? base64Result.split(',')[1] : base64Result;
+                
                 const queueItem = {
                     id,
                     filename: file.name,
                     fileType: file.type,
                     fileSize: file.size,
-                    base64: reader.result.split(',')[1],
+                    base64: base64Data,
+                    dataUrl: base64Result, // Guardar también el data URL completo
                     status: 'pending',
                     timestamp: new Date().toISOString()
                 };
@@ -593,7 +763,14 @@ class DocumentProcessor {
             };
             
             reader.readAsDataURL(file);
-        });
+        }
+        
+        // Mostrar mensaje final si se añadieron archivos
+        if (filesAdded > 0 && filesAdded === files.length) {
+            setTimeout(() => {
+                ModernUI.showToast(`✅ ${filesAdded} archivo(s) listo(s) para procesar`, 'success');
+            }, 500);
+        }
     }
 
     static async processDocument(docId) {
@@ -604,9 +781,18 @@ class DocumentProcessor {
         }
 
         // Verificar API key
-        if (!AppState.config.apiKey) {
-            ModernUI.showToast('Por favor configura tu API Key de OpenAI primero', 'warning');
+        if (!AppState.config.apiKey || !AppState.config.apiKey.startsWith('sk-') || AppState.config.apiKey.length < 20) {
+            ModernUI.showToast('⚠️ Por favor configura una API Key de OpenAI válida', 'warning');
             ModernUI.loadPage('settings');
+            
+            // Enfocar el campo de API key
+            setTimeout(() => {
+                const apiKeyInput = document.getElementById('apiKeyInput');
+                if (apiKeyInput) {
+                    apiKeyInput.focus();
+                    apiKeyInput.select();
+                }
+            }, 500);
             return;
         }
 
@@ -649,7 +835,8 @@ class DocumentProcessor {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    imageBase64: doc.base64,
+                    // Enviar el data URL completo si está disponible, o solo el base64
+                    imageBase64: doc.dataUrl || doc.base64,
                     fields: template.fields,
                     apiKey: AppState.config.apiKey,
                     model: model
@@ -696,17 +883,32 @@ class DocumentProcessor {
             }
 
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error procesando documento:', error);
             
             // Actualizar estado a error
             doc.status = 'error';
-            doc.error = error.message;
+            doc.error = error.message || 'Error desconocido';
+            
+            // Mejor manejo de errores de la API
+            let errorMessage = 'Error procesando el documento';
+            if (error.message) {
+                errorMessage = error.message;
+                // Buscar mensajes específicos de OpenAI
+                if (error.message.includes('unsupported image')) {
+                    errorMessage = 'Formato de imagen no soportado. Usa JPG, PNG o GIF.';
+                } else if (error.message.includes('API key')) {
+                    errorMessage = 'Error con la API Key. Verifica tu configuración.';
+                } else if (error.message.includes('rate limit')) {
+                    errorMessage = 'Límite de solicitudes excedido. Intenta en unos segundos.';
+                }
+            }
+            
             localStorage.setItem('processing_queue', JSON.stringify(AppState.processingQueue));
             
             this.updateQueueDisplay();
             this.updateQueueDisplay('uploadQueue');
             
-            ModernUI.showToast(`❌ Error: ${error.message}`, 'error');
+            ModernUI.showToast(`❌ ${errorMessage}`, 'error');
         }
     }
 
@@ -921,33 +1123,65 @@ class TemplateManager {
 
 class SettingsManager {
     static loadSettingsPage() {
+        // Siempre recargar la API key del localStorage antes de mostrar
+        AppState.config.apiKey = localStorage.getItem('openai_api_key') || '';
+        
+        // Escapar el valor de la API key para evitar problemas de HTML
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        };
+        
         document.getElementById('pageContent').innerHTML = `
             <h2>⚙️ Configuración</h2>
             <div class="settings-section">
-                <h3>API de OpenAI</h3>
+                <h3>🔑 API de OpenAI</h3>
+                
+                ${!AppState.config.apiKey || AppState.config.apiKey.length < 20 ? `
+                    <div class="alert alert-warning mb-4">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span><strong>Importante:</strong> Necesitas una API Key válida de OpenAI para procesar documentos.</span>
+                    </div>
+                ` : ''}
                 
                 <label>API Key de OpenAI</label>
+                <p class="text-sm text-gray-500 mb-2">Obtén tu API key en <a href="https://platform.openai.com/api-keys" target="_blank" class="text-blue-600 hover:underline">platform.openai.com/api-keys</a></p>
                 <div class="input-group">
-                    <input type="password" id="apiKeyInput" value="${AppState.config.apiKey}" 
-                           placeholder="sk-..." class="form-input">
+                    <input type="password" id="apiKeyInput" value="" 
+                           placeholder="sk-proj-..." class="form-input"
+                           onkeyup="if(event.key === 'Enter') SettingsManager.save()">
                     <button class="btn btn-primary" onclick="SettingsManager.validateKey()">
                         <i class="fas fa-check"></i> Validar
                     </button>
                 </div>
-                <div id="keyStatus" class="mt-2"></div>
+                <div id="keyStatus" class="mt-2">
+                    ${AppState.config.apiKey && AppState.config.apiKey.length > 20 ? 
+                        '<span class="text-info">💡 Haz clic en "Validar" para verificar tu API Key</span>' : 
+                        '<span class="text-warning">⚠️ No hay API Key configurada</span>'}
+                </div>
                 
                 <label class="mt-4">Modelo Predeterminado</label>
                 <select id="modelSelect" class="form-select">
                     <option value="gpt-4o-mini" ${AppState.config.selectedModel === 'gpt-4o-mini' ? 'selected' : ''}>
-                        GPT-4 Vision Mini (Económico - $0.002/doc)
+                        🌟 GPT-4o Mini (Más popular - $0.15/$0.60 por 1M tokens)
                     </option>
                     <option value="gpt-4o" ${AppState.config.selectedModel === 'gpt-4o' ? 'selected' : ''}>
-                        GPT-4 Vision (Preciso - $0.01/doc)
+                        🚀 GPT-4o (Balanceado - $2.50/$10.00 por 1M tokens)
                     </option>
-                    <option value="gpt-4-turbo" ${AppState.config.selectedModel === 'gpt-4-turbo' ? 'selected' : ''}>
-                        GPT-4 Turbo (Balanceado - $0.006/doc)
+                    <option value="o3-mini" ${AppState.config.selectedModel === 'o3-mini' ? 'selected' : ''}>
+                        🧠 O3 Mini (Razonamiento - $1.10/$4.40 por 1M tokens)
+                    </option>
+                    <option value="o1-mini" ${AppState.config.selectedModel === 'o1-mini' ? 'selected' : ''}>
+                        💡 O1 Mini (Razonamiento básico - $1.10/$4.40 por 1M tokens)
+                    </option>
+                    <option value="gpt-4o-2024-08-06" ${AppState.config.selectedModel === 'gpt-4o-2024-08-06' ? 'selected' : ''}>
+                        🔄 GPT-4o Agosto 2024 (Actualizado - $2.50/$10.00 por 1M tokens)
                     </option>
                 </select>
+                <p class="text-sm text-gray-500 mt-2">
+                    <i class="fas fa-info-circle"></i> Todos los modelos GPT-4o y O-series incluyen capacidades de visión para procesar imágenes.
+                </p>
 
                 <div class="mt-4">
                     <button class="btn btn-primary" onclick="SettingsManager.save()">
@@ -966,14 +1200,28 @@ class SettingsManager {
                 </div>
             </div>
         `;
+        
+        // Después de renderizar, establecer el valor del input de forma segura
+        setTimeout(() => {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            if (apiKeyInput) {
+                apiKeyInput.value = AppState.config.apiKey || '';
+            }
+        }, 10);
     }
 
     static async validateKey() {
-        const apiKey = document.getElementById('apiKeyInput').value.trim();
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const apiKey = apiKeyInput ? apiKeyInput.value.trim() : AppState.config.apiKey;
         const statusDiv = document.getElementById('keyStatus');
         
         if (!apiKey) {
-            statusDiv.innerHTML = '<span class="text-warning">⚠️ Por favor ingresa una API Key</span>';
+            if (statusDiv) statusDiv.innerHTML = '<span class="text-warning">⚠️ Por favor ingresa una API Key</span>';
+            return;
+        }
+        
+        if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+            if (statusDiv) statusDiv.innerHTML = '<span class="text-danger">❌ Formato de API Key inválido</span>';
             return;
         }
 
@@ -1002,13 +1250,51 @@ class SettingsManager {
     }
 
     static save() {
-        AppState.config.apiKey = document.getElementById('apiKeyInput').value.trim();
-        AppState.config.selectedModel = document.getElementById('modelSelect').value;
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const modelSelect = document.getElementById('modelSelect');
         
-        localStorage.setItem('openai_api_key', AppState.config.apiKey);
-        localStorage.setItem('selected_model', AppState.config.selectedModel);
+        if (!apiKeyInput) {
+            ModernUI.showToast('❌ Error al guardar configuración', 'error');
+            return;
+        }
         
-        ModernUI.showToast('✅ Configuración guardada', 'success');
+        const apiKey = apiKeyInput.value.trim();
+        
+        // Validación básica de la API key
+        if (!apiKey) {
+            ModernUI.showToast('❌ Por favor ingresa una API Key', 'error');
+            apiKeyInput.focus();
+            return;
+        }
+        
+        if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+            ModernUI.showToast('⚠️ La API Key parece inválida. Debe empezar con "sk-" y tener al menos 20 caracteres', 'warning');
+            apiKeyInput.focus();
+            return;
+        }
+        
+        // Actualizar el estado global
+        AppState.config.apiKey = apiKey;
+        if (modelSelect) {
+            AppState.config.selectedModel = modelSelect.value;
+            localStorage.setItem('selected_model', AppState.config.selectedModel);
+        }
+        
+        // Guardar en localStorage
+        localStorage.setItem('openai_api_key', apiKey);
+        
+        // Verificar que se guardó correctamente
+        const savedKey = localStorage.getItem('openai_api_key');
+        if (savedKey === apiKey) {
+            ModernUI.showToast('✅ Configuración guardada correctamente', 'success');
+            console.log('API Key guardada exitosamente');
+        } else {
+            ModernUI.showToast('⚠️ Hubo un problema al guardar la configuración', 'warning');
+            console.error('Error al guardar API Key en localStorage');
+        }
+        
+        // Validar la key automáticamente
+        this.validateKey();
     }
 
     static exportData() {
@@ -1039,6 +1325,29 @@ class SettingsManager {
             localStorage.clear();
             location.reload();
         }
+    }
+    
+    static debugApiKey() {
+        const storedKey = localStorage.getItem('openai_api_key');
+        const stateKey = AppState.config.apiKey;
+        const inputElement = document.getElementById('apiKeyInput');
+        const inputKey = inputElement ? inputElement.value : 'No input element';
+        
+        const debugInfo = `
+🔍 DEBUG API KEY:
+
+1. LocalStorage: ${storedKey ? `${storedKey.substring(0, 7)}...${storedKey.substring(storedKey.length - 4)}` : 'VACIO'}
+2. AppState: ${stateKey ? `${stateKey.substring(0, 7)}...${stateKey.substring(stateKey.length - 4)}` : 'VACIO'}
+3. Input actual: ${inputKey && inputKey !== 'No input element' ? `${inputKey.substring(0, 7)}...${inputKey.substring(inputKey.length - 4)}` : inputKey}
+
+LocalStorage completo:
+- openai_api_key: ${storedKey ? 'Presente' : 'Ausente'}
+- selected_model: ${localStorage.getItem('selected_model') || 'No definido'}
+        `;
+        
+        alert(debugInfo);
+        console.log(debugInfo);
+        console.log('LocalStorage completo:', { ...localStorage });
     }
 }
 
@@ -1075,7 +1384,31 @@ class IntegrationManager {
 // Inicialización
 // ========================
 
+function checkAPIKeyOnStart() {
+    // Si no hay API key configurada, mostrar un mensaje
+    if (!AppState.config.apiKey || AppState.config.apiKey.length < 20) {
+        setTimeout(() => {
+            ModernUI.showToast('🔑 Configura tu API Key de OpenAI en Configuración para comenzar', 'info');
+        }, 1500);
+    }
+}
+
+// Función para verificar que PDF.js esté listo
+function waitForPDFjs(callback) {
+    if (typeof pdfjsLib !== 'undefined') {
+        console.log('PDF.js está listo');
+        callback();
+    } else {
+        console.log('Esperando a que PDF.js se cargue...');
+        setTimeout(() => waitForPDFjs(callback), 100);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Esperar a que PDF.js esté listo antes de inicializar
+    waitForPDFjs(() => {
+        console.log('Inicializando aplicación con PDF.js listo');
+    });
     // Limpiar cola de procesamiento de sesiones anteriores que quedaron en "processing"
     let queueUpdated = false;
     AppState.processingQueue.forEach(item => {
@@ -1091,4 +1424,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Inicializar aplicación
     ModernUI.init();
+    
+    // Verificar API key
+    checkAPIKeyOnStart();
 });

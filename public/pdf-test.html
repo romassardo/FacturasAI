@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test PDF.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        #status {
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        input[type="file"] {
+            padding: 10px;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test de Conversión PDF a Imagen</h1>
+    
+    <div id="status">
+        <p>Estado: Esperando archivo PDF...</p>
+    </div>
+    
+    <input type="file" id="pdfFile" accept=".pdf" />
+    
+    <div id="output"></div>
+    
+    <!-- Cargar PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    
+    <script>
+        // Configurar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.innerHTML = `<p class="${type}">Estado: ${message}</p>`;
+            console.log(message);
+        }
+        
+        // Verificar que PDF.js está cargado
+        if (typeof pdfjsLib !== 'undefined') {
+            updateStatus('✅ PDF.js cargado correctamente. Versión: ' + pdfjsLib.version, 'success');
+        } else {
+            updateStatus('❌ Error: PDF.js no se pudo cargar', 'error');
+        }
+        
+        // Manejar la selección de archivo
+        document.getElementById('pdfFile').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file || file.type !== 'application/pdf') {
+                updateStatus('⚠️ Por favor selecciona un archivo PDF válido', 'error');
+                return;
+            }
+            
+            updateStatus('🔄 Procesando PDF: ' + file.name, 'info');
+            
+            try {
+                // Leer el archivo
+                const arrayBuffer = await file.arrayBuffer();
+                updateStatus('📖 Archivo leído, tamaño: ' + (arrayBuffer.byteLength / 1024).toFixed(2) + ' KB', 'info');
+                
+                // Cargar el PDF
+                const loadingTask = pdfjsLib.getDocument({
+                    data: arrayBuffer,
+                    cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/cmaps/',
+                    cMapPacked: true
+                });
+                
+                loadingTask.onProgress = function(progress) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    updateStatus('📥 Cargando PDF: ' + percent + '%', 'info');
+                };
+                
+                const pdf = await loadingTask.promise;
+                updateStatus('📄 PDF cargado. Páginas: ' + pdf.numPages, 'success');
+                
+                // Obtener la primera página
+                const page = await pdf.getPage(1);
+                
+                // Configurar el canvas
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                updateStatus('🎨 Renderizando página (dimensiones: ' + viewport.width + 'x' + viewport.height + ')', 'info');
+                
+                // Renderizar la página
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                updateStatus('✅ Conversión exitosa!', 'success');
+                
+                // Mostrar el canvas
+                const output = document.getElementById('output');
+                output.innerHTML = '<h3>Resultado:</h3>';
+                output.appendChild(canvas);
+                
+                // Convertir a base64
+                const dataUrl = canvas.toDataURL('image/png');
+                console.log('Data URL generado, longitud:', dataUrl.length);
+                
+                // Mostrar también como imagen
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.style.maxWidth = '100%';
+                img.style.marginTop = '20px';
+                output.appendChild(img);
+                
+                // Botón para descargar
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Descargar como PNG';
+                downloadBtn.style.marginTop = '20px';
+                downloadBtn.style.padding = '10px 20px';
+                downloadBtn.onclick = function() {
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = file.name.replace('.pdf', '.png');
+                    a.click();
+                };
+                output.appendChild(downloadBtn);
+                
+            } catch (error) {
+                updateStatus('❌ Error: ' + error.message, 'error');
+                console.error('Error completo:', error);
+            }
+        });
+    </script>
+</body>
+</html>
